@@ -1,0 +1,135 @@
+name: CI Deploy - Firebase Functions + EAS Build
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Deploy Functions and Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy Cloud Functions
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          # Requer secrets: FIREBASE_TOKEN e FIREBASE_PROJECT_ID
+          firebase deploy --only functions --project $FIREBASE_PROJECT_ID --token $FIREBASE_TOKEN
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Escrever google-services.json a partir do Secret (se existir)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          echo "Verificando se secret GOOGLE_SERVICES_JSON está presente..."
+          if [ -z "$GOOGLE_SERVICES_JSON" ] || [ "$GOOGLE_SERVICES_JSON" = "null" ]; then
+            echo "Secret GOOGLE_SERVICES_JSON não definido. Pulando criação do arquivo.";
+            exit 0;
+          fi
+          echo "Criando google-services.json a partir do secret..."
+          # instalar jq para validar JSON
+          sudo apt-get update && sudo apt-get install -y jq
+          # validar e gravar em arquivo (falha se JSON inválido)
+          echo "$GOOGLE_SERVICES_JSON" | jq . > ./google-services.json
+          echo "Arquivo criado e validado:"
+          ls -la ./google-services.json
+
+      - name: EAS build APK (Android) - gerar JSON
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: |
+          # Requer secret EAS_TOKEN
+          eas build --platform android --profile production-apk --non-interactive --json > apk_build.json
+
+      - name: Obter URL do artefato APK, baixar e criar Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          ARTIFACT_URL=$(jq -r '.artifacts.buildUrl // .artifactUrl // .artifacts[0].url // .artifacts[0].downloadUrl // .artifact.url' apk_build.json)
+          if [ -z "$ARTIFACT_URL" ] || [ "$ARTIFACT_URL" = "null" ]; then
+            echo "Não foi possível obter a URL do artefato APK from apk_build.json";
+            cat apk_build.json;
+            exit 1;
+          fi
+          echo "URL do artefato APK: $ARTIFACT_URL"
+          curl -L -o presenca-mais.apk "$ARTIFACT_URL"
+
+      - name: Criar Release e anexar APK
+        id: create_apk_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: apk-${{ github.run_number }}
+          release_name: APK Build ${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload asset APK to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_apk_release.outputs.upload_url }}
+          asset_path: ./presenca-mais.apk
+          asset_name: presenca-mais.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: EAS build AAB (Android App Bundle) - gerar JSON
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: |
+          eas build --platform android --profile production-aab --non-interactive --json > aab_build.json
+
+      - name: Obter URL do artefato AAB, baixar e criar Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          ARTIFACT_URL=$(jq -r '.artifacts.buildUrl // .artifactUrl // .artifacts[0].url // .artifacts[0].downloadUrl // .artifact.url' aab_build.json)
+          if [ -z "$ARTIFACT_URL" ] || [ "$ARTIFACT_URL" = "null" ]; then
+            echo "Não foi possível obter a URL do artefato AAB from aab_build.json";
+            cat aab_build.json;
+            exit 1;
+          fi
+          echo "URL do artefato AAB: $ARTIFACT_URL"
+          curl -L -o presenca-mais.aab "$ARTIFACT_URL"
+
+      - name: Criar Release e anexar AAB
+        id: create_aab_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: aab-${{ github.run_number }}
+          release_name: AAB Build ${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload asset AAB to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_aab_release.outputs.upload_url }}
+          asset_path: ./presenca-mais.aab
+          asset_name: presenca-mais.aab
+          asset_content_type: application/octet-stream
+
+      - name: Upload build artifacts (if any)
+        if: always()
+        run: echo "Build finished. Configure artifact upload if desired."
+
+# Secrets to set in GitHub repository settings:
+# - FIREBASE_TOKEN: token obtido via `firebase login:ci`
+# - FIREBASE_PROJECT_ID: seu projectId do Firebase
+# - EAS_TOKEN: token do EAS (use `eas login` e `eas token`)

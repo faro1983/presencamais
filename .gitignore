@@ -1,0 +1,9 @@
+# Ignorar arquivo de configuração do Firebase para Android
+google-services.json
+
+# Node / Expo
+node_modules/
+dist/
+.expo/
+.expo-shared/
+.env

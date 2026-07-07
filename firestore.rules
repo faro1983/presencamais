@@ -1,0 +1,32 @@
+// Regras de segurança exemplo em português
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /presencas/{data}/{alunoId} {
+      allow read: if request.auth != null && (
+        request.auth.token.role == 'gestao' ||
+        // permitir se usuário for responsável do aluno
+        exists(/databases/$(database)/documents/alunos/$(alunoId)) &&
+        get(/databases/$(database)/documents/alunos/$(alunoId)).data.responsaveisIds.hasAny([request.auth.uid])
+      );
+      allow write: if request.auth != null && request.auth.token.role == 'gestao';
+    }
+
+    match /responsaveis/{id} {
+      allow create: if request.auth != null && request.auth.token.role == 'gestao';
+      // se permitir auto-registro, validar alunosIds
+      allow read: if request.auth != null && request.auth.token.role in ['gestao','responsavel'];
+      allow update, delete: if request.auth != null && request.auth.token.role == 'gestao';
+    }
+
+    match /alunos/{id} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.role == 'gestao';
+    }
+
+    match /{document=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}

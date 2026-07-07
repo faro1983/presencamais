@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "PresencaMais",
+    "slug": "presenca-mais",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["android", "ios"],
+    "android": {
+      "package": "br.com.suaescola.appfrequencia",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}
