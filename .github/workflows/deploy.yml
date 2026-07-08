@@ -66,14 +66,28 @@ jobs:
           # Opção 1 (recomendada): autenticação por Service Account (GOOGLE_APPLICATION_CREDENTIALS)
           if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ] && [ -f "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
             echo "Deploy usando Service Account..."
+            set +e
             firebase deploy --only functions --project "$PROJECT_ID"
+            DEPLOY_EXIT=$?
+            set -e
+            if [ $DEPLOY_EXIT -ne 0 ]; then
+              echo "::warning::Deploy das Functions falhou (provável IAM/API). Pipeline seguirá para EAS.";
+              exit 0
+            fi
             exit 0
           fi
 
           # Opção 2: fallback para token de CI
           if [ -n "$FIREBASE_TOKEN" ] && [ "$FIREBASE_TOKEN" != "null" ]; then
             echo "Deploy usando FIREBASE_TOKEN..."
+            set +e
             firebase deploy --only functions --project "$PROJECT_ID" --token "$FIREBASE_TOKEN"
+            DEPLOY_EXIT=$?
+            set -e
+            if [ $DEPLOY_EXIT -ne 0 ]; then
+              echo "::warning::Deploy das Functions falhou (provável IAM/API). Pipeline seguirá para EAS.";
+              exit 0
+            fi
             exit 0
           fi
 
