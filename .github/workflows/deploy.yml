@@ -108,7 +108,12 @@ jobs:
       - name: EAS build APK (Android) - gerar JSON
         env:
           EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
         run: |
+          if [ -z "$EAS_PROJECT_ID" ] || [ "$EAS_PROJECT_ID" = "null" ]; then
+            echo "Secret EAS_PROJECT_ID não definido.";
+            exit 1;
+          fi
           # Requer secret EAS_TOKEN
           eas build --platform android --profile production-apk --non-interactive --json > apk_build.json
 
@@ -146,7 +151,12 @@ jobs:
       - name: EAS build AAB (Android App Bundle) - gerar JSON
         env:
           EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
         run: |
+          if [ -z "$EAS_PROJECT_ID" ] || [ "$EAS_PROJECT_ID" = "null" ]; then
+            echo "Secret EAS_PROJECT_ID não definido.";
+            exit 1;
+          fi
           eas build --platform android --profile production-aab --non-interactive --json > aab_build.json
 
       - name: Obter URL do artefato AAB, baixar e criar Release
@@ -189,3 +199,4 @@ jobs:
 # - FIREBASE_TOKEN: token obtido via `firebase login:ci` (fallback)
 # - FIREBASE_PROJECT_ID: seu projectId do Firebase
 # - EAS_TOKEN: token do EAS (use `eas login` e `eas token`)
+# - EAS_PROJECT_ID: UUID do projeto EAS (visível no painel do Expo ou após `eas init`)

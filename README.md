@@ -57,6 +57,8 @@ firebase deploy --only functions
 
 No código das funções (ex.: `cloud-functions/registrarFace.ts`) use `process.env` ou `functions.config()` conforme necessário.
 
+Se o deploy do Firebase retornar `403 Permission denied to get service [artifactregistry.googleapis.com]`, habilite manualmente as APIs no projeto e revise as permissões da service account (Cloud Build, Artifact Registry, Cloud Functions e Service Account User).
+
 5. Executar o app em desenvolvimento
 
 ```bash
@@ -87,6 +89,15 @@ eas build --platform android --profile production-aab
 ```
 
 No processo de build você pode fornecer variáveis de ambiente seguras no EAS Dashboard ou usando `eas secret`.
+
+Secrets obrigatórios para o GitHub Actions:
+
+- `EAS_TOKEN`: token de acesso do Expo/EAS.
+- `EAS_PROJECT_ID`: UUID do projeto EAS, obtido ao vincular o app no Expo (`eas init`) ou no painel do Expo.
+- `GOOGLE_SERVICES_JSON`: conteúdo completo do `google-services.json`.
+- `FIREBASE_SERVICE_ACCOUNT` ou `FIREBASE_TOKEN`: credencial para deploy das Cloud Functions.
+
+Se o workflow ainda mostrar `EAS project not configured`, o `EAS_PROJECT_ID` não foi informado no secret ou o app ainda não foi vinculado no Expo.
 
 7. Keys e keystore Android
 
