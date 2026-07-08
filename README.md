@@ -96,8 +96,13 @@ Secrets obrigatórios para o GitHub Actions:
 - `EAS_PROJECT_ID`: UUID do projeto EAS, obtido ao vincular o app no Expo (`eas init`) ou no painel do Expo.
 - `GOOGLE_SERVICES_JSON`: conteúdo completo do `google-services.json`.
 - `FIREBASE_SERVICE_ACCOUNT` ou `FIREBASE_TOKEN`: credencial para deploy das Cloud Functions.
+- `ANDROID_KEYSTORE_BASE64`: arquivo `.jks` em base64.
+- `ANDROID_KEYSTORE_PASSWORD`: senha do keystore.
+- `ANDROID_KEY_ALIAS`: alias da chave.
+- `ANDROID_KEY_PASSWORD`: senha da chave.
 
 Se o workflow ainda mostrar `EAS project not configured`, o `EAS_PROJECT_ID` não foi informado no secret ou o app ainda não foi vinculado no Expo.
+Se o workflow mostrar `Generating a new Keystore is not supported in --non-interactive mode`, configure os quatro secrets do keystore Android acima.
 
 7. Keys e keystore Android
 

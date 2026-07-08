@@ -11,11 +11,13 @@
       }
     },
     "production-apk": {
+      "credentialsSource": "local",
       "android": {
         "buildType": "apk"
       }
     },
     "production-aab": {
+      "credentialsSource": "local",
       "android": {
         "buildType": "app-bundle"
       }
