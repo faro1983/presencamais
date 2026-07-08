@@ -45,6 +45,7 @@ jobs:
           fi
 
       - name: Deploy Cloud Functions
+        continue-on-error: true
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
@@ -78,6 +79,11 @@ jobs:
 
           echo "Falha de autenticação: configure FIREBASE_SERVICE_ACCOUNT (recomendado) ou FIREBASE_TOKEN.";
           exit 1
+
+      - name: Aviso se deploy de Functions falhar
+        if: ${{ failure() }}
+        run: |
+          echo "Aviso: deploy de Functions falhou, mas o pipeline seguira para os builds EAS."
 
       - name: Install EAS CLI
         run: npm install -g eas-cli
