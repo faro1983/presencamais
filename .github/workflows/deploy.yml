@@ -107,7 +107,7 @@ jobs:
 
       - name: EAS build APK (Android) - gerar JSON
         env:
-          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
         run: |
           # Requer secret EAS_TOKEN
           eas build --platform android --profile production-apk --non-interactive --json > apk_build.json
@@ -145,7 +145,7 @@ jobs:
 
       - name: EAS build AAB (Android App Bundle) - gerar JSON
         env:
-          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+          EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
         run: |
           eas build --platform android --profile production-aab --non-interactive --json > aab_build.json
 
